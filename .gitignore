@@ -1,0 +1,61 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+\.idea/
+
+cmake-build-debug/
+
+pyqrandomx\.egg-info/
+/build/
+/.eggs/
+
+pyqrandomx/pyqrandomx\.py
+
+tests/python/coverage\.xml
+
+tests/python/\.coverage
+/.cache/
+
+cmake-build-release/
+
+pyqrandomx/__pycache__/
+
+coverage\.xml
+
+\.coverage
+
+\.DS_Store
+
+modeling/\.ipynb_checkpoints/
+
+dist/
