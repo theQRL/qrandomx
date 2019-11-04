@@ -1,0 +1,3 @@
+[submodule "deps/RandomX"]
+	path = deps/RandomX
+	url = https://github.com/cyyber/RandomX
