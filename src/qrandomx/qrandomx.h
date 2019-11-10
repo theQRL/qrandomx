@@ -31,6 +31,10 @@
 
 class QRandomX {
 public:
+    virtual ~QRandomX();
+
+    void freeVM();
+
     std::string lastError() { return std::string(""); };
 
     static uint64_t getSeedHeight(const uint64_t blockNumber);
@@ -38,6 +42,7 @@ public:
     static std::vector<uint8_t> hash(const uint64_t mainHeight,
             const uint64_t seedHeight, const std::vector<uint8_t>& seedHash,
             const std::vector<uint8_t>& input, int miners);
+
 };
 
 #endif //QRANDOMX_QRANDOMX_H

@@ -232,6 +232,7 @@ uint64_t QRXMiner::start(uint64_t mainHeight,
 
         current_nonce += thread_count;
       }
+      qrx->freeVM();
     }, thread_idx, thread_count, current_work_sequence_id));
   }
 
