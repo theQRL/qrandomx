@@ -24,6 +24,13 @@
 #include "qrandomx.h"
 #include "rx-slow-hash.h"
 
+QRandomX::~QRandomX() {
+  freeVM();
+}
+
+void QRandomX::freeVM() {
+  rx_slow_hash_free_state();
+}
 
 uint64_t QRandomX::getSeedHeight(const uint64_t blockNumber) {
   return rx_seedheight(blockNumber);
