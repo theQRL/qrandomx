@@ -12,9 +12,9 @@ if(NOT WIN32)
         set(CMAKE_C_FLAGS "-march=native -mtune=native -fPIC ${CMAKE_C_FLAGS} -msse2 -maes")
 endif()
 
-set(BUILD_TESTS OFF CACHE BOOL "Enables tests")
+set(BUILD_TESTS ON CACHE BOOL "Enables tests")
 set(BUILD_PYTHON ON CACHE BOOL "Enables python wrapper")
-set(BUILD_GO ON CACHE BOOL "Enables go wrapper")
+set(BUILD_GO OFF CACHE BOOL "Enables go wrapper")
 set(BUILD_WEBASSEMBLY OFF CACHE BOOL "Enables emscripten build")
 
 message(STATUS "BUILD_TESTS    " ${BUILD_TESTS})
