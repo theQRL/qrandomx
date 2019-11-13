@@ -24,7 +24,7 @@
 #ifndef QRANDOMX_QRANDOMXPOOL_H
 #define QRANDOMX_QRANDOMXPOOL_H
 
-#include "qrandomx.h"
+#include "threadedqrandomx.h"
 #include <mutex>
 #include <stack>
 #include <memory>
@@ -39,9 +39,9 @@ class QRandomXPool : public std::enable_shared_from_this<QRandomXPool>
 public:
 
   // a factory function to create new QRandomX objects
-  using QRandomXFactory = std::function<QRandomX*()>;
+  using QRandomXFactory = std::function<ThreadedQRandomX*()>;
 
-  QRandomXPool(QRandomXFactory factory = [](){ return new QRandomX(); });
+  QRandomXPool(QRandomXFactory factory = [](){ return new ThreadedQRandomX(); });
 
   virtual ~QRandomXPool();
 
@@ -51,14 +51,14 @@ public:
   {
   public:
       explicit ReturnToPoolDeleter(std::weak_ptr<QRandomXPool> ptrToOwnerPool);
-      void operator()(QRandomX* ptrToReleasedObject);
+      void operator()(ThreadedQRandomX* ptrToReleasedObject);
       void detachFromPool();
   private:
       std::weak_ptr<QRandomXPool> _ptrToOwnerPool;
   };
 
   // a std::unique_ptr with a custome deleter that the client will use
-  using uniqueQRandomXPtr = std::unique_ptr<QRandomX, ReturnToPoolDeleter>;
+  using uniqueQRandomXPtr = std::unique_ptr<ThreadedQRandomX, ReturnToPoolDeleter>;
 
   // obtain an unused QRandomX instance from the pool or
   // create a new one if there are none available
