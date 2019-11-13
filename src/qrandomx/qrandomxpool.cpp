@@ -26,7 +26,8 @@
 QRandomXPool::ReturnToPoolDeleter::ReturnToPoolDeleter(std::weak_ptr<QRandomXPool> ptrToOwnerPool)
         : _ptrToOwnerPool(ptrToOwnerPool) { }
 
-void QRandomXPool::ReturnToPoolDeleter::operator()(QRandomX* ptrToReleasedObject)
+//void QRandomXPool::ReturnToPoolDeleter::operator()(QRandomX* ptrToReleasedObject)
+void QRandomXPool::ReturnToPoolDeleter::operator()(ThreadedQRandomX* ptrToReleasedObject)
 {
   if (auto pool = _ptrToOwnerPool.lock())
   {

@@ -22,7 +22,6 @@
   */
 
 #include "powhelper.h"
-#include "qrandomx/qrandomx.h"
 #include "qrandomx/qrandomxpool.h"
 #include "misc/bignum.h"
 
