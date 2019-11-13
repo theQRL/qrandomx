@@ -26,7 +26,6 @@
 QRandomXPool::ReturnToPoolDeleter::ReturnToPoolDeleter(std::weak_ptr<QRandomXPool> ptrToOwnerPool)
         : _ptrToOwnerPool(ptrToOwnerPool) { }
 
-//void QRandomXPool::ReturnToPoolDeleter::operator()(QRandomX* ptrToReleasedObject)
 void QRandomXPool::ReturnToPoolDeleter::operator()(ThreadedQRandomX* ptrToReleasedObject)
 {
   if (auto pool = _ptrToOwnerPool.lock())
@@ -70,7 +69,7 @@ QRandomXPool::uniqueQRandomXPtr QRandomXPool::acquire()
   std::unique_lock<std::mutex> lock(_mutex);
   if (_poolContainer.empty())
   {
-    // no QRandomX intances availabe in the pool so use the factory to
+    // no QRandomX instances available in the pool so use the factory to
     // create and return a new one
     return uniqueQRandomXPtr{_factory(), ReturnToPoolDeleter(shared_from_this())};
   }
