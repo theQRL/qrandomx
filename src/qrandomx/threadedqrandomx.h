@@ -32,67 +32,71 @@
 #include <vector>
 
 struct QRandomXProxyResult {
-    std::vector<uint8_t> hashOutput;
-    uint64_t heightOutput;
+  std::vector<uint8_t> hashOutput;
+  uint64_t heightOutput;
 };
 
 class QRandomXParams {
 public:
-    QRandomXParams(const uint64_t& mainHeight) {
-      this->mainHeight = mainHeight;
-      this->funcType = 1;
-    }
+  QRandomXParams(uint64_t mainHeight) {
+    this->mainHeight = mainHeight;
+    this->funcType = 1;
+  }
 
-    QRandomXParams(const uint64_t& mainHeight,
-                   const uint64_t& seedHeight,
-                   const std::vector<uint8_t>& seedHash,
-                   const std::vector<uint8_t>& input,
-                   int& miners) {
-      this->mainHeight = mainHeight;
-      this->seedHeight = seedHeight;
-      this->seedHash = seedHash;
-      this->input = input;
-      this->miners = miners;
-      this->funcType = 0;
-    }
+  QRandomXParams(uint64_t mainHeight,
+                 uint64_t seedHeight,
+                 const std::vector<uint8_t>& seedHash,
+                 const std::vector<uint8_t>& input,
+                 uint32_t miners) {
+    this->mainHeight = mainHeight;
+    this->seedHeight = seedHeight;
+    this->seedHash = seedHash;
+    this->input = input;
+    this->miners = miners;
+    this->funcType = 0;
+  }
 
-    uint64_t mainHeight;
-    uint64_t seedHeight;
-    std::vector<uint8_t> seedHash;
-    std::vector<uint8_t> input;
-    int miners;
+  uint64_t mainHeight;
+  uint64_t seedHeight;
+  std::vector<uint8_t> seedHash;
+  std::vector<uint8_t> input;
+  uint32_t miners;
 
-    std::deque<QRandomXProxyResult> output;
-    std::mutex outputQueueMutex;
-    std::condition_variable outputReady;
+protected:
+  std::deque<QRandomXProxyResult> _output;
+  std::mutex _outputQueue_mutex;
+  std::condition_variable _outputReady;
 
-    int funcType;
+  int funcType;
+
+  friend class ThreadedQRandomX;
 };
 
 class ThreadedQRandomX {
 public:
-    std::atomic_bool _stop_eventThread{false};
-    std::unique_ptr<std::thread> _eventThread;
+  ThreadedQRandomX();
+  virtual ~ThreadedQRandomX();
 
-    std::deque<std::shared_ptr<QRandomXParams>> _eventQueue;
-    std::mutex _eventQueue_mutex;
-    std::condition_variable _eventReleased;
+  void _submitWork(std::shared_ptr<QRandomXParams>& qrxParams);
+  void _threadedQRandomXProxy();
 
-    ThreadedQRandomX();
-    virtual ~ThreadedQRandomX();
+  void freeVM();
 
-    void _submitWork(std::shared_ptr<QRandomXParams>& qrxParams);
-    void _threadedQRandomXProxy();
+  std::string lastError() { return std::string(""); };
 
-    void freeVM();
+  uint64_t getSeedHeight(const uint64_t blockNumber);
 
-    std::string lastError() { return std::string(""); };
+  std::vector<uint8_t> hash(const uint64_t mainHeight,
+                            const uint64_t seedHeight, const std::vector<uint8_t>& seedHash,
+                            const std::vector<uint8_t>& input, int miners);
 
-    uint64_t getSeedHeight(const uint64_t blockNumber);
+protected:
+  std::atomic_bool _stop_eventThread{false};
+  std::unique_ptr<std::thread> _eventThread;
 
-    std::vector<uint8_t> hash(const uint64_t mainHeight,
-                              const uint64_t seedHeight, const std::vector<uint8_t>& seedHash,
-                              const std::vector<uint8_t>& input, int miners);
+  std::deque<std::shared_ptr<QRandomXParams>> _eventQueue;
+  std::mutex _eventQueue_mutex;
+  std::condition_variable _eventReleased;
 };
 
 #endif //QRANDOMX_THREADEDQRANDOMX_H
