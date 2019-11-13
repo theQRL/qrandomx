@@ -21,11 +21,15 @@
   *
   */
 #include <iostream>
+#include <xmmintrin.h>
 #include <qrandomx/qrxminer.h>
 #include <misc/bignum.h>
 #include <pow/powhelper.h>
-#include <qrandomx/qrandomx.h>
+#include <qrandomx/threadedqrandomx.h>
 #include "gtest/gtest.h"
+
+#define MINEXPECTEDMXCSR 8064
+#define MAXEXPECTEDMXCSR 8127
 
 namespace {
   class CustomMiner: public QRXMiner
@@ -46,7 +50,7 @@ namespace {
 
   TEST(QRXMiner, CancelInEvent) {
     CustomMiner qrxm;
-    QRandomX qrx;
+    ThreadedQRandomX qrx;
 
     uint64_t main_height = 10;
     uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -86,5 +90,7 @@ namespace {
         std::this_thread::sleep_for(500ms);
         qrxm.cancel();
     }
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 }

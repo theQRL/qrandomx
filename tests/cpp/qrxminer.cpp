@@ -21,11 +21,15 @@
   *
   */
 #include <iostream>
+#include <xmmintrin.h>
 #include <qrandomx/qrxminer.h>
 #include <misc/bignum.h>
 #include <pow/powhelper.h>
-#include <qrandomx/qrandomx.h>
+#include <qrandomx/threadedqrandomx.h>
 #include "gtest/gtest.h"
+
+#define MINEXPECTEDMXCSR 8064
+#define MAXEXPECTEDMXCSR 8127
 
 namespace {
   TEST(QRXMiner, PassesTarget) {
@@ -56,12 +60,14 @@ namespace {
       std::cout << printByteVector2(over_1) << std::endl;
       ASSERT_FALSE(PoWHelper::passesTarget(over_1, target));
     }
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRXMiner, Run1Thread)
   {
     QRXMiner qm;
-    QRandomX qrx;
+    ThreadedQRandomX qrx;
 
     uint64_t main_height = 10;
     uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -128,12 +134,14 @@ namespace {
     std::cout << printByteVector2(qm.solutionHash()) << std::endl;
 
     EXPECT_EQ(expected_hash, qm.solutionHash());
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRXMiner, RunThreads_KeepHashing)
   {
     QRXMiner qm;
-    QRandomX qrx;
+    ThreadedQRandomX qrx;
 
     uint64_t main_height = 10;
     uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -158,7 +166,7 @@ namespace {
 
     int hash_count = 0;
     while (!qm.solutionAvailable()) {
-      QRandomX qrx;
+      ThreadedQRandomX qrx;
 
       uint64_t main_height = 10;
       uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -190,12 +198,14 @@ namespace {
     // Due to multiple threads running, possible nonce solution may vary
     // following are the most triggered possible nonce values
     EXPECT_TRUE(qm.solutionNonce() == 7424 || qm.solutionNonce() == 7475);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRXMiner, Run1Thread_bigblob)
   {
     QRXMiner qm;
-    QRandomX qrx;
+    ThreadedQRandomX qrx;
 
     uint64_t main_height = 10;
     uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -223,12 +233,14 @@ namespace {
 
     ASSERT_TRUE(qm.solutionAvailable());
     EXPECT_EQ(2, qm.solutionNonce());
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRXMiner, RunAndRestart)
   {
     QRXMiner qm;
-    QRandomX qrx;
+    ThreadedQRandomX qrx;
 
     uint64_t main_height = 10;
     uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -280,12 +292,14 @@ namespace {
     };
 
     EXPECT_EQ(expected_winner, qm.solutionInput());
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRXMiner, MeasureHashRate)
   {
     QRXMiner qm;
-    QRandomX qrx;
+    ThreadedQRandomX qrx;
 
     uint64_t main_height = 10;
     uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -324,12 +338,14 @@ namespace {
     EXPECT_FALSE(qm.solutionAvailable());
     qm.cancel();
     ASSERT_FALSE(qm.isRunning());
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRXMiner, RunAndCancel)
   {
     QRXMiner qm;
-    QRandomX qrx;
+    ThreadedQRandomX qrx;
 
     uint64_t main_height = 10;
     uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -367,12 +383,14 @@ namespace {
     ASSERT_FALSE(qm.isRunning());
 
     ASSERT_FALSE(qm.solutionAvailable());
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRXMiner, RunCancelSafety)
   {
     QRXMiner qm;
-    QRandomX qrx;
+    ThreadedQRandomX qrx;
 
     uint64_t main_height = 10;
     uint64_t seed_height = qrx.getSeedHeight(main_height);
@@ -415,6 +433,8 @@ namespace {
     }
 
     ASSERT_FALSE(qm.isRunning());
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
 }

@@ -21,10 +21,14 @@
   *
   */
 #include <iostream>
+#include <xmmintrin.h>
 #include <qrandomx/qrxminer.h>
 #include <pow/powhelper.h>
 #include <misc/bignum.h>
 #include "gtest/gtest.h"
+
+#define MINEXPECTEDMXCSR 8064
+#define MAXEXPECTEDMXCSR 8127
 
 namespace {
   TEST(PoWHelper, TargetCalculationDifficultyZero) {
@@ -35,6 +39,8 @@ namespace {
     auto target = ph.getTarget(zeros);
 
     EXPECT_EQ(zeros, target);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(PoWHelper, TargetCalculationDifficultyOne) {
@@ -63,6 +69,8 @@ namespace {
     };
 
     EXPECT_EQ(expected_target, target);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(PoWHelper, TargetCalculationDifficultyTwo) {
@@ -91,6 +99,8 @@ namespace {
     };
 
     EXPECT_EQ(expected_target, target);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(PoWHelper, TargetCalculationDifficultyLow) {
@@ -118,6 +128,8 @@ namespace {
     };
 
     EXPECT_EQ(expected_target, target);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(PoWHelper, TargetCalculationDifficulty2) {
@@ -136,6 +148,8 @@ namespace {
     std::cout << printByteVector(target) << std::endl;
 
     EXPECT_EQ(expected_target, target);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(PoWHelper, DifficultyOne) {
@@ -163,14 +177,19 @@ namespace {
 
     answer = ph.getDifficulty(90, toByteVector(1000000) );
     EXPECT_EQ(951172, fromByteVector(answer));
+
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(PoWHelper, DifficultyExtreme) {
     PoWHelper ph;
 
     std::vector<uint8_t> answer = ph.getDifficulty(187, toByteVector(10727) );
-
     EXPECT_EQ(8517, fromByteVector(answer));
+
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(PoWHelper, DifficultyFlatQuantization) {
@@ -188,6 +207,9 @@ namespace {
 
     answer = ph.getDifficulty(70, toByteVector(5) );
     EXPECT_EQ(4, fromByteVector(answer));
+
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(PoWHelper, DifficultyTarget) {
@@ -217,5 +239,8 @@ namespace {
 
     difficulty = ph.getDifficulty(90, toByteVector(1000000) );
     EXPECT_EQ(951172, fromByteVector(difficulty));
+
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 }

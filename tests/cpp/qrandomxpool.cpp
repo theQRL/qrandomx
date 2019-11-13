@@ -21,15 +21,18 @@
   *
   */
 #include <iostream>
+#include <xmmintrin.h>
 #include <qrandomx/qrandomxpool.h>
 #include "gtest/gtest.h"
 
-namespace {
+#define MINEXPECTEDMXCSR 8064
+#define MAXEXPECTEDMXCSR 8127
 
-  class QRandomXWithRefCount : public QRandomX
+namespace {
+  class QRandomXWithRefCount : public ThreadedQRandomX
   {
   public:
-      QRandomXWithRefCount() : QRandomX() { ++_instances; }
+      QRandomXWithRefCount() : ThreadedQRandomX() { ++_instances; }
       virtual ~QRandomXWithRefCount() { --_instances; }
       static size_t _instances;
   };
@@ -76,6 +79,8 @@ namespace {
     auto output = qrx->hash(main_height, seed_height, seed_hash, input, miners);
 
     EXPECT_EQ(output_expected, output);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRandomXPool, Init) {
@@ -83,6 +88,8 @@ namespace {
     EXPECT_TRUE(pool->empty());
     EXPECT_EQ(pool->size(), 0);
     EXPECT_EQ(QRandomXWithRefCount::_instances, 0);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRandomXPool, Empty) {
@@ -95,6 +102,8 @@ namespace {
     qrx.reset();
     EXPECT_FALSE(pool->empty());
     EXPECT_EQ(QRandomXWithRefCount::_instances, 1);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRandomXPool, AcquireHashReleaseCycle) {
@@ -122,6 +131,8 @@ namespace {
 
     pool.reset();
     EXPECT_EQ(QRandomXWithRefCount::_instances, 0);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRandomXPool, AcquireHashReleaseFour) {
@@ -148,6 +159,8 @@ namespace {
 
     pool.reset();
     EXPECT_EQ(QRandomXWithRefCount::_instances, 0);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
   TEST(QRandomXPool, AcquireAndDeletePool) {
@@ -166,6 +179,8 @@ namespace {
     qrx.reset();
 
     EXPECT_EQ(QRandomXWithRefCount::_instances, 0);
+    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
+    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
   }
 
 }

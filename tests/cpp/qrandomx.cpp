@@ -21,16 +21,30 @@
   *
   */
 #include <iostream>
+#include <xmmintrin.h>
 #include <qrandomx/qrandomx.h>
 #include <misc/bignum.h>
 #include "gtest/gtest.h"
 
+#define MINEXPECTEDMXCSR 8064
+
 namespace {
-  TEST(QRandomX, Init) {
+  class QRandomXTest : public ::testing::Test {
+  protected:
+      void SetUp() override {
+        _mm_setcsr(8064);  // Resetting MXCSR value to default, as its changed by RandomX VM
+      }
+
+      void TearDown() override {
+        _mm_setcsr(8064);  // Resetting MXCSR value to default, as its changed by RandomX VM
+      }
+  };
+
+  TEST_F(QRandomXTest, Init) {
     QRandomX qrx;
   }
 
-  TEST(QRandomX, RunSingleHash) {
+  TEST_F(QRandomXTest, RunSingleHash) {
     QRandomX qrx;
 
     uint64_t main_height = 10;
@@ -70,7 +84,7 @@ namespace {
     EXPECT_EQ(output_expected, output);
   }
 
-  TEST(QRandomX, RunSingleHashBigBlob) {
+  TEST_F(QRandomXTest, RunSingleHashBigBlob) {
     QRandomX qrx;
 
     uint64_t main_height = 9865;
