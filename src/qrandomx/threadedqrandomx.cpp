@@ -20,7 +20,7 @@
   * of this Program grant you additional permission to convey the resulting work.
   *
   */
-#include <iostream>
+
 #include "threadedqrandomx.h"
 #include "qrandomx/qrandomx.h"
 
@@ -51,11 +51,9 @@ uint64_t ThreadedQRandomX::getSeedHeight(const uint64_t blockNumber) {
   std::shared_ptr<QRandomXParams> qrxParams = std::make_shared<QRandomXParams>(blockNumber);
 
   _submitWork(qrxParams);
-
-  std::unique_lock<std::mutex> outputQLock(qrxParams->outputQueueMutex);
-  qrxParams->outputReady.wait(outputQLock);
-  auto data = qrxParams->output.front().heightOutput;
-  return data;
+  std::unique_lock<std::mutex> outputQLock(qrxParams->_outputQueue_mutex);
+  qrxParams->_outputReady.wait(outputQLock, [=] { return !qrxParams->_output.empty() || _stop_eventThread; });
+  return qrxParams->_output.front().heightOutput;
 }
 
 std::vector<uint8_t> ThreadedQRandomX::hash(const uint64_t mainHeight,
@@ -67,10 +65,10 @@ std::vector<uint8_t> ThreadedQRandomX::hash(const uint64_t mainHeight,
   _submitWork(qrxParams);
 
   // Check outputReady
-  std::unique_lock<std::mutex> outputQLock(qrxParams->outputQueueMutex);
-  qrxParams->outputReady.wait(outputQLock);
+  std::unique_lock<std::mutex> outputQLock(qrxParams->_outputQueue_mutex);
+  qrxParams->_outputReady.wait(outputQLock, [=] { return !qrxParams->_output.empty() || _stop_eventThread; });
 
-  return qrxParams->output.front().hashOutput;
+  return qrxParams->_output.front().hashOutput;
 }
 
 void ThreadedQRandomX::_threadedQRandomXProxy() {
@@ -79,7 +77,6 @@ void ThreadedQRandomX::_threadedQRandomXProxy() {
     std::unique_lock<std::mutex> queue_lock(_eventQueue_mutex);
     _eventReleased.wait(queue_lock,
                         [=] { return !_eventQueue.empty() || _stop_eventThread; });
-
     if (!_eventQueue.empty()) {
       auto event = _eventQueue.front();
       _eventQueue.pop_front();
@@ -98,10 +95,10 @@ void ThreadedQRandomX::_threadedQRandomXProxy() {
           qrx->freeVM();
           break;
       }
-      //TODO: Notify output is ready
-      std::lock_guard<std::mutex> lock_queue(event->outputQueueMutex);
-      event->output.push_back(qrxResult);
-      event->outputReady.notify_one();
+      // Notify output is ready
+      std::lock_guard<std::mutex> lock_queue(event->_outputQueue_mutex);
+      event->_output.push_back(qrxResult);
+      event->_outputReady.notify_one();
     }
     else {
       queue_lock.unlock();

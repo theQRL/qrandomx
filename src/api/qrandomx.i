@@ -94,7 +94,7 @@ Swig::DirectorMethodException::raise(err_msg.c_str());
 %{
 #include "pow/powhelper.h"
 #include "misc/strbignum.h"
-#include "qrandomx/qrandomx.h"
+#include "qrandomx/threadedqrandomx.h"
 #include "qrandomx/qrxminer.h"
 %}
 
@@ -102,6 +102,6 @@ Swig::DirectorMethodException::raise(err_msg.c_str());
 
 %include "pow/powhelper.h"
 %include "misc/strbignum.h"
-%include "qrandomx/qrandomx.h"
+%include "qrandomx/threadedqrandomx.h"
 %include "qrandomx/qrxminer.h"
 
