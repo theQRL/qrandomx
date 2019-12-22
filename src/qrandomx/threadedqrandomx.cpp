@@ -77,7 +77,7 @@ void ThreadedQRandomX::_threadedQRandomXProxy() {
     std::unique_lock<std::mutex> queue_lock(_eventQueue_mutex);
     _eventReleased.wait(queue_lock,
                         [=] { return !_eventQueue.empty() || _stop_eventThread; });
-    if (!_eventQueue.empty()) {
+    while (!_eventQueue.empty()) {
       auto event = _eventQueue.front();
       _eventQueue.pop_front();
       queue_lock.unlock();
@@ -100,8 +100,6 @@ void ThreadedQRandomX::_threadedQRandomXProxy() {
       event->_output.push_back(qrxResult);
       event->_outputReady.notify_one();
     }
-    else {
-      queue_lock.unlock();
-    }
+    queue_lock.unlock();
   }
 }
