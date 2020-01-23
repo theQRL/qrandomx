@@ -77,29 +77,37 @@ void ThreadedQRandomX::_threadedQRandomXProxy() {
     std::unique_lock<std::mutex> queue_lock(_eventQueue_mutex);
     _eventReleased.wait(queue_lock,
                         [=] { return !_eventQueue.empty() || _stop_eventThread; });
-    while (!_eventQueue.empty()) {
-      auto event = _eventQueue.front();
-      _eventQueue.pop_front();
-      queue_lock.unlock();
-      // Process Request
-      QRandomXProxyResult qrxResult;
-      switch(event->funcType) {
-        case 0:
-          qrxResult.hashOutput = qrx->hash(event->mainHeight, event->seedHeight,
-                  event->seedHash, event->input, event->miners);
-          break;
-        case 1:
-          qrxResult.heightOutput = qrx->getSeedHeight(event->mainHeight);
-          break;
-        case 2:
-          qrx->freeVM();
-          break;
+    if(!_eventQueue.empty()) {
+      std::vector<std::shared_ptr<QRandomXParams>> events;
+      while (!_eventQueue.empty()) {
+        auto event = _eventQueue.front();
+        events.push_back(event);
+        _eventQueue.pop_front();
       }
-      // Notify output is ready
-      std::lock_guard<std::mutex> lock_queue(event->_outputQueue_mutex);
-      event->_output.push_back(qrxResult);
-      event->_outputReady.notify_one();
+      queue_lock.unlock();
+
+      // Process Request
+      for(const auto& event: events) {
+        QRandomXProxyResult qrxResult;
+        switch (event->funcType) {
+          case 0:
+            qrxResult.hashOutput = qrx->hash(event->mainHeight, event->seedHeight,
+                                             event->seedHash, event->input, event->miners);
+            break;
+          case 1:
+            qrxResult.heightOutput = qrx->getSeedHeight(event->mainHeight);
+            break;
+          case 2:
+            qrx->freeVM();
+            break;
+        }
+        // Notify output is ready
+        std::lock_guard<std::mutex> lock_queue(event->_outputQueue_mutex);
+        event->_output.push_back(qrxResult);
+        event->_outputReady.notify_one();
+      }
+    } else {
+      queue_lock.unlock();
     }
-    queue_lock.unlock();
   }
 }
