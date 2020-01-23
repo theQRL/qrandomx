@@ -5,7 +5,7 @@ import time
 
 from pyqrandomx import pyqrandomx
 from pyqrandomx.pyqrandomx import QRXMiner
-from pyqrandomx.pyqrandomx import QRandomX
+from pyqrandomx.pyqrandomx import ThreadedQRandomX
 from pyqrandomx.pyqrandomx import PoWHelper
 
 
@@ -23,7 +23,7 @@ class TestQRXMiner(TestCase):
                     print("Hey a solution has been found!", event.nonce)
                     self.python_nonce = event.nonce
                 return True
-        qrx = QRandomX()
+        qrx = ThreadedQRandomX()
 
         main_height = 10
         seed_height = qrx.getSeedHeight(main_height)
@@ -86,7 +86,7 @@ class TestQRXMiner(TestCase):
                     self.python_nonce = event.nonce
                 return True
 
-        qrx = QRandomX()
+        qrx = ThreadedQRandomX()
 
         main_height = 10
         seed_height = qrx.getSeedHeight(main_height)
@@ -164,7 +164,7 @@ class TestQRXMiner(TestCase):
                     self.timeout_triggered = True
                 return True
 
-        qrx = QRandomX()
+        qrx = ThreadedQRandomX()
 
         main_height = 10
         seed_height = qrx.getSeedHeight(main_height)
@@ -226,7 +226,7 @@ class TestQRXMiner(TestCase):
                     self.timeout_triggered = True
                 return True
 
-        qrx = QRandomX()
+        qrx = ThreadedQRandomX()
 
         main_height = 10
         seed_height = qrx.getSeedHeight(main_height)
@@ -288,7 +288,7 @@ class TestQRXMiner(TestCase):
                     self.timeout_triggered = True
                 return True
 
-        qrx = QRandomX()
+        qrx = ThreadedQRandomX()
 
         main_height = 10
         seed_height = qrx.getSeedHeight(main_height)

@@ -2,7 +2,7 @@
 # file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 from unittest import TestCase
 
-from pyqrandomx.pyqrandomx import QRandomX
+from pyqrandomx.pyqrandomx import ThreadedQRandomX
 
 
 class TestQRandomX(TestCase):
@@ -10,10 +10,10 @@ class TestQRandomX(TestCase):
         super(TestQRandomX, self).__init__(*args, **kwargs)
 
     def test_init(self):
-        qrx = QRandomX()
+        qrx = ThreadedQRandomX()
 
     def test_hash(self):
-        qrx = QRandomX()
+        qrx = ThreadedQRandomX()
 
         main_height = 10
         seed_height = qrx.getSeedHeight(main_height)
