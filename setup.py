@@ -9,6 +9,8 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 import distutils.sysconfig as sysconfig
+import versioneer
+import pkg_resources  # part of setuptools
 
 
 class CMakeBuild(build_ext):
@@ -59,9 +61,15 @@ def setup_package():
     cmake = []
     pkg_data = {'pyqrandomx': ['*.dll']} if sys.platform == 'win32' else {}
 
+    try:
+        version = pkg_resources.require("pyqrandomx")[0].version
+    except:
+        version = versioneer.get_version()
+
     setup(setup_requires=['six', 'pyscaffold>=3.0.2'] + sphinx + cmake,
           packages=['pyqrandomx', ],
           ext_modules=[CMakeExtension('pyqrandomx')],
+          version=version,
           cmdclass=dict(build_ext=CMakeBuild),
           package_data=pkg_data,
           use_pyscaffold=True)
