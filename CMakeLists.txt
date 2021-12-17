@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.10)
 project(qrandomx)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_COMPILER "/usr/local/bin/g++-10" CACHE STRING "C compiler" FORCE)
-    set(CMAKE_C_COMPILER "/usr/local/bin/gcc-10" CACHE STRING "C++ compiler" FORCE)
+    set(CMAKE_CXX_COMPILER "/usr/bin/g++" CACHE STRING "C compiler" FORCE)
+    set(CMAKE_C_COMPILER "/usr/bin/gcc" CACHE STRING "C++ compiler" FORCE)
     set(CMAKE_CXX_STANDARD 14)
 else ()
   set(CMAKE_CXX_STANDARD 14)
@@ -15,8 +15,8 @@ endif()
 SET(CMAKE_CXX_FLAGS " -pthread")
 
 if(NOT WIN32)
-        set(CMAKE_CXX_FLAGS "-march=native -mtune=native ${CMAKE_CXX_FLAGS} -msse2 -maes")
-        set(CMAKE_C_FLAGS "-march=native -mtune=native -fPIC ${CMAKE_C_FLAGS} -msse2 -maes")
+        set(CMAKE_CXX_FLAGS "-mcpu=apple-m1 -mtune=native ${CMAKE_CXX_FLAGS}")
+        set(CMAKE_C_FLAGS "-mcpu=apple-m1 -mtune=native -fPIC ${CMAKE_C_FLAGS}")
 endif()
 
 set(BUILD_TESTS ON CACHE BOOL "Enables tests")
@@ -92,11 +92,11 @@ if (CMAKE_C_COMPILER_ID MATCHES MSVC)
                 )
 elseif (NOT XMRIG_ARM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
         list(APPEND REF_RANDOMX_SRC
-                ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_x86_static.S
-                ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_x86.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_a64_static.S
+                ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_a64.cpp
                 )
         # cheat because cmake and ccache hate each other
-        set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_x86_static.S PROPERTY LANGUAGE C)
+        set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_a64_static.S PROPERTY LANGUAGE C)
 endif()
 
 ## SWIG + API - Python related stuff
