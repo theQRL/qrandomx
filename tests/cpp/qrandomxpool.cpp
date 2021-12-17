@@ -21,7 +21,6 @@
   *
   */
 #include <iostream>
-#include <xmmintrin.h>
 #include <qrandomx/qrandomxpool.h>
 #include "gtest/gtest.h"
 

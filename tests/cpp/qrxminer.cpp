@@ -21,7 +21,6 @@
   *
   */
 #include <iostream>
-#include <xmmintrin.h>
 #include <qrandomx/qrxminer.h>
 #include <misc/bignum.h>
 #include <pow/powhelper.h>
