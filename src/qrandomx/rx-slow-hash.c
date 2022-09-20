@@ -217,7 +217,11 @@ void rx_slow_hash(const uint64_t mainheight, const uint64_t seedheight, const ch
   cache = rx_sp->rs_cache;
   if (cache == NULL) {
     if (cache == NULL) {
-      cache = randomx_alloc_cache(flags | RANDOMX_FLAG_LARGE_PAGES);
+      #ifdef __arm__
+      	cache = randomx_alloc_cache(flags);
+      #else
+        cache = randomx_alloc_cache(flags | RANDOMX_FLAG_LARGE_PAGES);
+      #endif
       if (cache == NULL) {
         cache = randomx_alloc_cache(flags);
       }
@@ -255,7 +259,11 @@ void rx_slow_hash(const uint64_t mainheight, const uint64_t seedheight, const ch
       }
       CTHR_MUTEX_UNLOCK(rx_dataset_mutex);
     }
-    rx_vm = randomx_create_vm(flags | RANDOMX_FLAG_LARGE_PAGES, rx_sp->rs_cache, rx_dataset);
+    #ifdef __arm__
+      rx_vm = randomx_create_vm(flags, rx_sp->rs_cache, rx_dataset);
+    #else
+      rx_vm = randomx_create_vm(flags | RANDOMX_FLAG_LARGE_PAGES, rx_sp->rs_cache, rx_dataset);
+    #endif
     if(rx_vm == NULL) { //large pages failed
       rx_vm = randomx_create_vm(flags, rx_sp->rs_cache, rx_dataset);
     }
