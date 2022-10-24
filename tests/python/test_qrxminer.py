@@ -139,12 +139,12 @@ class TestQRXMiner(TestCase):
         self.assertTrue(ph.verifyInput(block_number2, seed_block_number2, seed_header_hash2, mining_blob2, target2))
 
         # Python can sleep or do something else.. the callback will happen in the background
-        time.sleep(5)
+        time.sleep(8)
 
         # This property has been just created in the python custom class when the event is received
         # Solution may vary depending upon which thread has first reached to the solution
-        self.assertIn(qm.python_nonce, [72, 73])
         self.assertEqual(True, qm.solutionAvailable())
+        self.assertIn(qm.python_nonce, [72, 73])
         self.assertIn(qm.solutionNonce(), [72, 73])
 
         solution_input = list(qm.solutionInput())
