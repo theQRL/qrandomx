@@ -191,7 +191,7 @@ if (BUILD_TESTS)
 
         ##############################
         # Google Test
-        # Based on instructions in https://github.com/google/googletest/tree/master/googletest#incorporating-into-an-existing-cmake-project
+        # Based on instructions in https://github.com/google/googletest/tree/main/googletest#incorporating-into-an-existing-cmake-project
         # Download and unpack googletest at configure time
         configure_file(CMakeLists.txt.gtest.in googletest-download/CMakeLists.txt)
         execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .

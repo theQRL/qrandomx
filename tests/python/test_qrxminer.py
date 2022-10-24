@@ -66,9 +66,9 @@ class TestQRXMiner(TestCase):
                  thread_count=2)
 
         # Python can sleep or do something else.. the callback will happen in the background
-        time.sleep(5)
+        time.sleep(8)
 
-        # This property has been just created in the python custom class when the event is received
+        # # This property has been just created in the python custom class when the event is received
         self.assertEqual(148, qm.python_nonce)
 
         # Now check wrapper values
@@ -128,6 +128,16 @@ class TestQRXMiner(TestCase):
                  target=target,
                  thread_count=2)
 
+        # verifying at different seed hash while mining is going on for different seed hash
+        ph = PoWHelper()
+        block_number2 = 811073
+        seed_block_number2 = 811008
+        seed_header_hash2 = bytes.fromhex('f7e2ebf0f08f01e8d08439303512456d2fd6bc276395c97f22e75b22efcd0f00')
+        mining_blob2 = bytes.fromhex('00ba9cf950493934bdde9b954f7aa3e28581c45b00bc657fc26f445e4b542f191849948a9ab444000000ab000000000000000000000000000f5a315073a01c1aed2e0d5a61d148e742f13023')
+        target2 = bytes.fromhex('1100efddccbbaa99887766554433221100efddccbbaa99887766554433221100')
+
+        self.assertTrue(ph.verifyInput(block_number2, seed_block_number2, seed_header_hash2, mining_blob2, target2))
+
         # Python can sleep or do something else.. the callback will happen in the background
         time.sleep(5)
 
@@ -147,7 +157,6 @@ class TestQRXMiner(TestCase):
         output = qrx.hash(main_height, seed_height, seed_hash, solution_input, 0)
         print("raw     Hash   ", output)
 
-        ph = PoWHelper()
         self.assertTrue(ph.verifyInput(main_height, seed_height, seed_hash, solution_input, target))
         solution_input[4] = 0x29
         self.assertFalse(ph.verifyInput(main_height, seed_height, seed_hash, solution_input, target))

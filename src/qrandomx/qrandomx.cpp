@@ -38,13 +38,13 @@ uint64_t QRandomX::getSeedHeight(const uint64_t blockNumber) {
 
 std::vector<uint8_t> QRandomX::hash(const uint64_t mainHeight,
         const uint64_t seedHeight, const std::vector<uint8_t>& seedHash,
-        const std::vector<uint8_t>& input, int miners) {
+        const std::vector<uint8_t>& input, int miners, int is_alt) {
 
   std::vector<uint8_t> output(32);
 
   rx_slow_hash(mainHeight, seedHeight, (char *) seedHash.data(),
           input.data(), input.size(),
-          (char *) output.data(), miners, 0);
+          (char *) output.data(), miners, is_alt);
 
   return output;
 }
