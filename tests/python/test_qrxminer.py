@@ -144,8 +144,6 @@ class TestQRXMiner(TestCase):
         # This property has been just created in the python custom class when the event is received
         # Solution may vary depending upon which thread has first reached to the solution
         self.assertEqual(True, qm.solutionAvailable())
-        self.assertIn(qm.python_nonce, [72, 73])
-        self.assertIn(qm.solutionNonce(), [72, 73])
 
         solution_input = list(qm.solutionInput())
 
@@ -158,6 +156,8 @@ class TestQRXMiner(TestCase):
         print("raw     Hash   ", output)
 
         self.assertTrue(ph.verifyInput(main_height, seed_height, seed_hash, solution_input, target))
+        self.assertIn(qm.python_nonce, [72, 73])
+        self.assertIn(qm.solutionNonce(), [72, 73])
         solution_input[4] = 0x29
         self.assertFalse(ph.verifyInput(main_height, seed_height, seed_hash, solution_input, target))
 
