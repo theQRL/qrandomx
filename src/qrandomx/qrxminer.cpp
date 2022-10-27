@@ -160,6 +160,8 @@ uint64_t QRXMiner::start(uint64_t mainHeight,
 {
   cancel();
 
+  _mainHeight = mainHeight;
+  _seedHeight = seedHeight;
   _seedHash = seedHash;
   _input = input;
   _nonceOffset = nonceOffset;
@@ -195,7 +197,7 @@ uint64_t QRXMiner::start(uint64_t mainHeight,
 
       while (!_stop_request && !_solution_found) {
         *nonce = htonl(current_nonce);
-        auto current_hash = qrx->hash(mainHeight, seedHeight, _seedHash, tmp_input, 0);
+        auto current_hash = qrx->hash(_mainHeight, _seedHeight, _seedHash, tmp_input, 0);
         _hash_count++;
 
         if (thread_idx==0) {
