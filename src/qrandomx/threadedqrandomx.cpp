@@ -58,10 +58,10 @@ uint64_t ThreadedQRandomX::getSeedHeight(const uint64_t blockNumber) {
 
 std::vector<uint8_t> ThreadedQRandomX::hash(const uint64_t mainHeight,
         const uint64_t seedHeight, const std::vector<uint8_t>& seedHash,
-        const std::vector<uint8_t>& input, int miners) {
+        const std::vector<uint8_t>& input, int miners, int is_alt) {
 
   std::shared_ptr<QRandomXParams> qrxParams = std::make_shared<QRandomXParams>(mainHeight,
-          seedHeight, seedHash, input, miners);
+          seedHeight, seedHash, input, miners, is_alt);
   _submitWork(qrxParams);
 
   // Check outputReady
@@ -92,7 +92,7 @@ void ThreadedQRandomX::_threadedQRandomXProxy() {
         switch (event->funcType) {
           case 0:
             qrxResult.hashOutput = qrx->hash(event->mainHeight, event->seedHeight,
-                                             event->seedHash, event->input, event->miners);
+                                             event->seedHash, event->input, event->miners, event->is_alt);
             break;
           case 1:
             qrxResult.heightOutput = qrx->getSeedHeight(event->mainHeight);

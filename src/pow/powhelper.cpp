@@ -124,6 +124,6 @@ bool PoWHelper::verifyInput(uint64_t mainHeight,
                             const std::vector<uint8_t> &target)
 {
   auto qrx = _qrxpool->acquire();
-  auto hash = qrx->hash(mainHeight, seedHeight, seedHash, input, 0);
+  auto hash = qrx->hash(mainHeight, seedHeight, seedHash, input, 0, 1);
   return passesTarget(hash, target);
 }

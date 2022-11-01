@@ -85,7 +85,8 @@ protected:
 
   void _eventThreadWorker();
 
-//  std::vector<uint8_t> _input;
+  uint64_t _mainHeight;
+  uint64_t _seedHeight;
   std::vector<uint8_t> _seedHash;
   std::vector<uint8_t> _input;
   std::vector<uint8_t> _target;

@@ -41,7 +41,7 @@ public:
 
     static std::vector<uint8_t> hash(const uint64_t mainHeight,
             const uint64_t seedHeight, const std::vector<uint8_t>& seedHash,
-            const std::vector<uint8_t>& input, int miners);
+            const std::vector<uint8_t>& input, int miners, int is_alt = 0);
 
 };
 

@@ -47,13 +47,15 @@ public:
                  uint64_t seedHeight,
                  const std::vector<uint8_t>& seedHash,
                  const std::vector<uint8_t>& input,
-                 uint32_t miners) {
+                 uint32_t miners,
+                 int is_alt) {
     this->mainHeight = mainHeight;
     this->seedHeight = seedHeight;
     this->seedHash = seedHash;
     this->input = input;
     this->miners = miners;
     this->funcType = 0;
+    this->is_alt = is_alt;
   }
 
   uint64_t mainHeight;
@@ -61,6 +63,7 @@ public:
   std::vector<uint8_t> seedHash;
   std::vector<uint8_t> input;
   uint32_t miners;
+  int is_alt;
 
 protected:
   std::deque<QRandomXProxyResult> _output;
@@ -88,7 +91,7 @@ public:
 
   std::vector<uint8_t> hash(const uint64_t mainHeight,
                             const uint64_t seedHeight, const std::vector<uint8_t>& seedHash,
-                            const std::vector<uint8_t>& input, int miners);
+                            const std::vector<uint8_t>& input, int miners, int is_alt=0);
 
 protected:
   std::atomic_bool _stop_eventThread{false};
