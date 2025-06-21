@@ -12,11 +12,24 @@ else ()
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
-SET(CMAKE_CXX_FLAGS " -pthread")
 
-if(NOT WIN32)
-        set(CMAKE_CXX_FLAGS "-march=native -mtune=native ${CMAKE_CXX_FLAGS} -msse2 -maes")
-        set(CMAKE_C_FLAGS "-march=native -mtune=native -fPIC ${CMAKE_C_FLAGS} -msse2 -maes")
+if (NOT WIN32)
+    # Start with the "generic" native‐tuning flags
+    set(_BASE_COMMON_FLAGS "-march=native -mtune=native")
+    
+    # Only add x86‐specific flags if we're NOT on ARM64
+    if (NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+        set(_BASE_CXX_FLAGS "${_BASE_COMMON_FLAGS} -msse2 -maes")
+        set(_BASE_C_FLAGS   "${_BASE_COMMON_FLAGS} -msse2 -maes -fPIC")
+    else()
+        # Add ARM64-specific flags
+        set(_BASE_CXX_FLAGS "${_BASE_COMMON_FLAGS} -march=armv8-a+crypto+fp+simd")
+        set(_BASE_C_FLAGS   "${_BASE_COMMON_FLAGS} -march=armv8-a+crypto+fp+simd -fPIC")
+    endif()
+
+    # Set pthread flag separately to avoid syntax issues
+    set(CMAKE_CXX_FLAGS "${_BASE_CXX_FLAGS} -pthread")
+    set(CMAKE_C_FLAGS   "${_BASE_C_FLAGS}")
 endif()
 
 set(BUILD_TESTS ON CACHE BOOL "Enables tests")
@@ -71,7 +84,9 @@ list(APPEND REF_RANDOMX_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/soft_aes.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/superscalar.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/virtual_machine.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/virtual_memory.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/virtual_memory.c
+        # Explicitly exclude the old virtual_memory.cpp to prevent build errors
+        # ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/virtual_memory.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/vm_compiled_light.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/vm_compiled.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/vm_interpreted_light.cpp
@@ -90,13 +105,31 @@ if (CMAKE_C_COMPILER_ID MATCHES MSVC)
                 ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_x86_static.asm
                 ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_x86.cpp
                 )
-elseif (NOT XMRIG_ARM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+elseif (NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
         list(APPEND REF_RANDOMX_SRC
                 ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_x86_static.S
                 ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_x86.cpp
                 )
         # cheat because cmake and ccache hate each other
         set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_x86_static.S PROPERTY LANGUAGE C)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+        enable_language(ASM)
+        list(APPEND REF_RANDOMX_SRC
+                ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_a64_static.S
+                ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_a64.cpp
+                )
+        # Set ASM language for ARM64
+        set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_a64_static.S PROPERTY LANGUAGE ASM)
+        # Set assembler flags for ARM64
+        set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -march=armv8-a+crypto")
+        set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/jit_compiler_a64_static.S 
+            PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp -march=armv8-a+crypto")
+        # Define ARM64 macro
+        add_definitions(-DRANDOMX_AARCH64=1)
+        # Ensure proper compiler flags for ARM64 JIT
+        if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+            set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -x assembler-with-cpp")
+        endif()
 endif()
 
 ## SWIG + API - Python related stuff
