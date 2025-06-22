@@ -70,7 +70,6 @@ namespace {
     EXPECT_EQ( uint256_t("33333333333333333333333333333333333333333333333333"), c);
   }
 
-#if defined(__aarch64__) || defined(_M_ARM64)
   TEST(Boost_bignum, NaNAssert1) {
     double nan_value = std::nan("0");
     try {
@@ -78,30 +77,7 @@ namespace {
         FAIL() << "Expected an exception to be thrown";
     }
     catch(const std::exception& e) {
-        std::string actual = e.what();
-        std::string expected = "Cannot convert a non-finite number to an integer.";
-        std::cout << "DEBUG: Expected [" << expected << "]\n";
-        std::cout << "DEBUG: Actual   [" << actual << "]\n";
-        std::cout << "DEBUG: Expected length=" << expected.length() << ", Actual length=" << actual.length() << "\n";
-        
-        for (size_t i = 0; i < std::min(expected.length(), actual.length()); ++i) {
-            if (expected[i] != actual[i]) {
-                std::cout << "DEBUG: First difference at position " << i 
-                          << ": Expected '" << static_cast<int>(expected[i]) 
-                          << "', Actual '" << static_cast<int>(actual[i]) << "'\n";
-                break;
-            }
-        }
-        
-        // Try both versions to see which one works
-        bool match1 = (actual == "Cannot convert a non-finite number to an integer");
-        bool match2 = (actual == "Cannot convert a non-finite number to an integer.");
-        
-        std::cout << "DEBUG: Matches version without period: " << (match1 ? "YES" : "NO") << "\n";
-        std::cout << "DEBUG: Matches version with period: " << (match2 ? "YES" : "NO") << "\n";
-        
-        // Use the one that should work based on our debug output
-        EXPECT_EQ(actual, expected);
+        EXPECT_STREQ("Cannot convert a non-finite number to an integer.", e.what());
     }
   }
 
@@ -127,32 +103,6 @@ namespace {
     }
   }
 #pragma GCC diagnostic pop
-#else
-  TEST(Boost_bignum, NaNAssert1) {
-    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-    double nan_value = std::nan("0");
-    EXPECT_DEATH({
-        uint256_t a { nan_value };
-    }, "boost::math::isnan");
-  }
-
-  TEST(Boost_bignum, NaNAssert2) {
-    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-    EXPECT_DEATH({
-        uint256_t a { 0./0. };
-    }, "boost::math::isnan");
-  }
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdiv-by-zero"
-  TEST(Boost_bignum, NaNAssert3) {
-    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-    EXPECT_DEATH({
-        uint256_t a { 1./0 };
-    }, "boost::math::isinf");
-  }
-#pragma GCC diagnostic pop
-#endif
 
   TEST(Boost_bignum, InvalidNumber) {
     EXPECT_THROW( {uint256_t a { "hello" };} , std::exception);
