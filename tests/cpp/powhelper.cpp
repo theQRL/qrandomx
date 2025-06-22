@@ -21,14 +21,29 @@
   *
   */
 #include <iostream>
+#if defined(__aarch64__) || defined(_M_ARM64)
+#include <arm_neon.h>
+// ARM64 FP control state
+inline uint32_t get_fp_status() {
+    uint64_t fpcr;
+    asm volatile("mrs %0, fpcr" : "=r"(fpcr));
+    return static_cast<uint32_t>(fpcr);
+}
+#define MINEXPECTEDFPCR 0
+#define MAXEXPECTEDFPCR (3 << 22)  // Default + RMode mask
+#define CHECK_FP_STATE() ASSERT_GE(get_fp_status(), MINEXPECTEDFPCR); \
+                         ASSERT_LE(get_fp_status(), MAXEXPECTEDFPCR)
+#else
 #include <xmmintrin.h>
+#define MINEXPECTEDMXCSR 8064
+#define MAXEXPECTEDMXCSR 8127
+#define CHECK_FP_STATE() ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR); \
+                         ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR)
+#endif
 #include <qrandomx/qrxminer.h>
 #include <pow/powhelper.h>
 #include <misc/bignum.h>
 #include "gtest/gtest.h"
-
-#define MINEXPECTEDMXCSR 8064
-#define MAXEXPECTEDMXCSR 8127
 
 namespace {
   TEST(PoWHelper, TargetCalculationDifficultyZero) {
@@ -39,8 +54,7 @@ namespace {
     auto target = ph.getTarget(zeros);
 
     EXPECT_EQ(zeros, target);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(PoWHelper, TargetCalculationDifficultyOne) {
@@ -69,8 +83,7 @@ namespace {
     };
 
     EXPECT_EQ(expected_target, target);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(PoWHelper, TargetCalculationDifficultyTwo) {
@@ -99,8 +112,7 @@ namespace {
     };
 
     EXPECT_EQ(expected_target, target);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(PoWHelper, TargetCalculationDifficultyLow) {
@@ -128,8 +140,7 @@ namespace {
     };
 
     EXPECT_EQ(expected_target, target);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(PoWHelper, TargetCalculationDifficulty2) {
@@ -148,8 +159,7 @@ namespace {
     std::cout << printByteVector(target) << std::endl;
 
     EXPECT_EQ(expected_target, target);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(PoWHelper, DifficultyOne) {
@@ -178,8 +188,7 @@ namespace {
     answer = ph.getDifficulty(90, toByteVector(1000000) );
     EXPECT_EQ(951172, fromByteVector(answer));
 
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(PoWHelper, DifficultyExtreme) {
@@ -188,8 +197,7 @@ namespace {
     std::vector<uint8_t> answer = ph.getDifficulty(187, toByteVector(10727) );
     EXPECT_EQ(8517, fromByteVector(answer));
 
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(PoWHelper, DifficultyFlatQuantization) {
@@ -208,8 +216,7 @@ namespace {
     answer = ph.getDifficulty(70, toByteVector(5) );
     EXPECT_EQ(4, fromByteVector(answer));
 
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(PoWHelper, DifficultyTarget) {
@@ -240,7 +247,6 @@ namespace {
     difficulty = ph.getDifficulty(90, toByteVector(1000000) );
     EXPECT_EQ(951172, fromByteVector(difficulty));
 
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 }

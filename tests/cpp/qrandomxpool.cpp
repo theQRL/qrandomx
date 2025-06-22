@@ -21,12 +21,28 @@
   *
   */
 #include <iostream>
+#if defined(__aarch64__) || defined(_M_ARM64)
+#include <arm_neon.h>
+// ARM64 FP control state
+inline uint32_t get_fp_status() {
+    uint64_t fpcr;
+    asm volatile("mrs %0, fpcr" : "=r"(fpcr));
+    return static_cast<uint32_t>(fpcr);
+}
+#define MINEXPECTEDFPCR 0
+#define MAXEXPECTEDFPCR (3 << 22)  // Default + RMode mask
+#define CHECK_FP_STATE() ASSERT_GE(get_fp_status(), MINEXPECTEDFPCR); \
+                         ASSERT_LE(get_fp_status(), MAXEXPECTEDFPCR)
+#else
 #include <xmmintrin.h>
+#define MINEXPECTEDMXCSR 8064
+#define MAXEXPECTEDMXCSR 8127
+#define CHECK_FP_STATE() ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR); \
+                         ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR)
+#endif
 #include <qrandomx/qrandomxpool.h>
 #include "gtest/gtest.h"
 
-#define MINEXPECTEDMXCSR 8064
-#define MAXEXPECTEDMXCSR 8127
 
 namespace {
   class QRandomXWithRefCount : public ThreadedQRandomX
@@ -79,8 +95,7 @@ namespace {
     auto output = qrx->hash(main_height, seed_height, seed_hash, input, miners);
 
     EXPECT_EQ(output_expected, output);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRandomXPool, Init) {
@@ -88,8 +103,7 @@ namespace {
     EXPECT_TRUE(pool->empty());
     EXPECT_EQ(pool->size(), 0);
     EXPECT_EQ(QRandomXWithRefCount::_instances, 0);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRandomXPool, Empty) {
@@ -102,8 +116,7 @@ namespace {
     qrx.reset();
     EXPECT_FALSE(pool->empty());
     EXPECT_EQ(QRandomXWithRefCount::_instances, 1);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRandomXPool, AcquireHashReleaseCycle) {
@@ -131,8 +144,7 @@ namespace {
 
     pool.reset();
     EXPECT_EQ(QRandomXWithRefCount::_instances, 0);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRandomXPool, AcquireHashReleaseFour) {
@@ -159,8 +171,7 @@ namespace {
 
     pool.reset();
     EXPECT_EQ(QRandomXWithRefCount::_instances, 0);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRandomXPool, AcquireAndDeletePool) {
@@ -179,8 +190,7 @@ namespace {
     qrx.reset();
 
     EXPECT_EQ(QRandomXWithRefCount::_instances, 0);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
 }

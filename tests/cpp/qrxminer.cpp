@@ -21,15 +21,31 @@
   *
   */
 #include <iostream>
+#if defined(__aarch64__) || defined(_M_ARM64)
+#include <arm_neon.h>
+// ARM64 FP control state
+inline uint32_t get_fp_status() {
+    uint64_t fpcr;
+    asm volatile("mrs %0, fpcr" : "=r"(fpcr));
+    return static_cast<uint32_t>(fpcr);
+}
+#define MINEXPECTEDFPCR 0
+#define MAXEXPECTEDFPCR (3 << 22)  // Default + RMode mask
+#define CHECK_FP_STATE() ASSERT_GE(get_fp_status(), MINEXPECTEDFPCR); \
+                         ASSERT_LE(get_fp_status(), MAXEXPECTEDFPCR)
+#else
 #include <xmmintrin.h>
+#define MINEXPECTEDMXCSR 8064
+#define MAXEXPECTEDMXCSR 8127
+#define CHECK_FP_STATE() ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR); \
+                         ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR)
+#endif
 #include <qrandomx/qrxminer.h>
 #include <misc/bignum.h>
 #include <pow/powhelper.h>
 #include <qrandomx/threadedqrandomx.h>
 #include "gtest/gtest.h"
 
-#define MINEXPECTEDMXCSR 8064
-#define MAXEXPECTEDMXCSR 8127
 
 namespace {
   TEST(QRXMiner, PassesTarget) {
@@ -60,8 +76,7 @@ namespace {
       std::cout << printByteVector2(over_1) << std::endl;
       ASSERT_FALSE(PoWHelper::passesTarget(over_1, target));
     }
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRXMiner, Run1Thread)
@@ -134,8 +149,7 @@ namespace {
     std::cout << printByteVector2(qm.solutionHash()) << std::endl;
 
     EXPECT_EQ(expected_hash, qm.solutionHash());
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRXMiner, RunThreads_KeepHashing)
@@ -198,8 +212,7 @@ namespace {
     // Due to multiple threads running, possible nonce solution may vary
     // following are the most triggered possible nonce values
     EXPECT_TRUE(qm.solutionNonce() == 7424 || qm.solutionNonce() == 7475);
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRXMiner, Run1Thread_bigblob)
@@ -233,8 +246,7 @@ namespace {
 
     ASSERT_TRUE(qm.solutionAvailable());
     EXPECT_EQ(2, qm.solutionNonce());
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRXMiner, RunAndRestart)
@@ -292,8 +304,7 @@ namespace {
     };
 
     EXPECT_EQ(expected_winner, qm.solutionInput());
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRXMiner, MeasureHashRate)
@@ -338,8 +349,7 @@ namespace {
     EXPECT_FALSE(qm.solutionAvailable());
     qm.cancel();
     ASSERT_FALSE(qm.isRunning());
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRXMiner, RunAndCancel)
@@ -383,8 +393,7 @@ namespace {
     ASSERT_FALSE(qm.isRunning());
 
     ASSERT_FALSE(qm.solutionAvailable());
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
   TEST(QRXMiner, RunCancelSafety)
@@ -433,8 +442,7 @@ namespace {
     }
 
     ASSERT_FALSE(qm.isRunning());
-    ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR);
-    ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR);
+    CHECK_FP_STATE();
   }
 
 }

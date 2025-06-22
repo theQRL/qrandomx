@@ -25,6 +25,12 @@
 #include <cmath>
 #include "gtest/gtest.h"
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+#pragma message "Compiling for ARM64"
+#else
+#pragma message "Compiling for x86"
+#endif
+
 namespace {
   using uint256_t =  boost::multiprecision::uint256_t;
 
@@ -66,17 +72,35 @@ namespace {
 
   TEST(Boost_bignum, NaNAssert1) {
     double nan_value = std::nan("0");
-    EXPECT_DEATH( {uint256_t a { nan_value };} , "boost::math::isnan");
+    try {
+        uint256_t a { nan_value };
+        FAIL() << "Expected an exception to be thrown";
+    }
+    catch(const std::exception& e) {
+        EXPECT_STREQ("Cannot convert a non-finite number to an integer.", e.what());
+    }
   }
 
   TEST(Boost_bignum, NaNAssert2) {
-    EXPECT_DEATH( {uint256_t a { 0./0.  };} , "boost::math::isnan");
+    try {
+        uint256_t a { 0./0. };
+        FAIL() << "Expected an exception to be thrown";
+    }
+    catch(const std::exception& e) {
+        EXPECT_STREQ("Cannot convert a non-finite number to an integer.", e.what());
+    }
   }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdiv-by-zero"
   TEST(Boost_bignum, NaNAssert3) {
-    EXPECT_DEATH( {uint256_t a { 1./0 };} , "boost::math::isinf");
+    try {
+        uint256_t a { 1./0 };
+        FAIL() << "Expected an exception to be thrown";
+    }
+    catch(const std::exception& e) {
+        EXPECT_STREQ("Cannot convert a non-finite number to an integer.", e.what());
+    }
   }
 #pragma GCC diagnostic pop
 

@@ -21,22 +21,50 @@
   *
   */
 #include <iostream>
+#if defined(__aarch64__) || defined(_M_ARM64)
+#include <arm_neon.h>
+// ARM64 FP control state
+inline uint32_t get_fp_status() {
+    uint64_t fpcr;
+    asm volatile("mrs %0, fpcr" : "=r"(fpcr));
+    return static_cast<uint32_t>(fpcr);
+}
+#define MINEXPECTEDFPCR 0
+#define MAXEXPECTEDFPCR (3 << 22)  // Default + RMode mask
+#define CHECK_FP_STATE() ASSERT_GE(get_fp_status(), MINEXPECTEDFPCR); \
+                         ASSERT_LE(get_fp_status(), MAXEXPECTEDFPCR)
+#else
 #include <xmmintrin.h>
+#define MINEXPECTEDMXCSR 8064
+#define MAXEXPECTEDMXCSR 8127
+#define CHECK_FP_STATE() ASSERT_GE(_mm_getcsr(), MINEXPECTEDMXCSR); \
+                         ASSERT_LE(_mm_getcsr(), MAXEXPECTEDMXCSR)
+#endif
 #include <qrandomx/qrandomx.h>
 #include <misc/bignum.h>
 #include "gtest/gtest.h"
-
-#define MINEXPECTEDMXCSR 8064
 
 namespace {
   class QRandomXTest : public ::testing::Test {
   protected:
       void SetUp() override {
+#if defined(__aarch64__) || defined(_M_ARM64)
+        // Set ARM64 FPCR to default value
+        uint64_t fpcr = 0;  // Default value
+        asm volatile("msr fpcr, %0" : : "r"(fpcr));
+#else
         _mm_setcsr(8064);  // Resetting MXCSR value to default, as its changed by RandomX VM
+#endif
       }
 
       void TearDown() override {
+#if defined(__aarch64__) || defined(_M_ARM64)
+        // Reset ARM64 FPCR to default value
+        uint64_t fpcr = 0;  // Default value
+        asm volatile("msr fpcr, %0" : : "r"(fpcr));
+#else
         _mm_setcsr(8064);  // Resetting MXCSR value to default, as its changed by RandomX VM
+#endif
       }
   };
 

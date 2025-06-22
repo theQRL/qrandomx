@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <cstdint>
 
 class QRandomX {
 public:
