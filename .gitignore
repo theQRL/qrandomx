@@ -65,3 +65,10 @@ CMakeFiles/
 googletest-build/
 googletest-download/
 Testing/
+/cmake_install.cmake
+/CTestTestfile.cmake
+/DartConfiguration.tcl
+/pyqrandomx/qrandomxPYTHON_wrap.cxx
+/pyqrandomx/qrandomxPYTHON_wrap.h
+/qrandomx_test
+/Makefile

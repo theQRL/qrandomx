@@ -4,14 +4,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(qrandomx)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_COMPILER "/usr/local/bin/g++-10" CACHE STRING "C compiler" FORCE)
-    set(CMAKE_C_COMPILER "/usr/local/bin/gcc-10" CACHE STRING "C++ compiler" FORCE)
-    set(CMAKE_CXX_STANDARD 14)
-else ()
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-
+set(CMAKE_CXX_STANDARD 14)
 
 if (NOT WIN32)
     # Start with the "generic" native‐tuning flags
