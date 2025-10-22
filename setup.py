@@ -31,6 +31,10 @@ class CMakeBuild(build_ext):
                           '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extension_path,
                           '-DCMAKE_BUILD_TYPE=Release']
 
+            # Fix ARM64 macOS ASM compiler (nasm doesn't work on ARM64)
+            if sys.platform == 'darwin' and platform.machine() in ['arm64', 'aarch64']:
+                cmake_call.append('-DCMAKE_ASM_COMPILER=/usr/bin/clang')
+
             # Detect conda
             if sys.platform == 'darwin' and 'CONDA_DEFAULT_ENV' in os.environ:
                 print('OSX + Conda environment detected')
