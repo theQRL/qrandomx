@@ -7,22 +7,38 @@ project(qrandomx)
 set(CMAKE_CXX_STANDARD 14)
 
 if (NOT WIN32)
-    # Start with the "generic" native‐tuning flags
-    set(_BASE_COMMON_FLAGS "-march=native -mtune=native")
-    
-    # Only add x86‐specific flags if we're NOT on ARM64
+    # ISA baseline.
+    #
+    # Building with -march=native produces binaries that only run on CPUs at
+    # least as capable as the build machine. That is fine for a local build but
+    # wrong for anything distributed (PyPI wheels, container images): a CI
+    # runner with, say, AVX-512 VBMI yields code that dies with SIGILL on an
+    # older AVX-512 part such as Skylake-SP/W. Default to a portable baseline
+    # and let a machine-local build opt in with -DQRX_ARCH_X86=native.
     if (NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
-        set(_BASE_CXX_FLAGS "${_BASE_COMMON_FLAGS} -msse2 -maes")
-        set(_BASE_C_FLAGS   "${_BASE_COMMON_FLAGS} -msse2 -maes -fPIC")
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("-march=x86-64-v2" QRX_HAS_X86_64_V2)
+        if (QRX_HAS_X86_64_V2)
+            set(_QRX_ARCH_X86_DEFAULT "x86-64-v2")
+        else()
+            # -march=x86-64-v2 needs GCC >= 11 / Clang >= 12; nehalem is the
+            # equivalent baseline understood by older compilers.
+            set(_QRX_ARCH_X86_DEFAULT "nehalem")
+        endif()
+        set(QRX_ARCH_X86 "${_QRX_ARCH_X86_DEFAULT}" CACHE STRING
+            "x86-64 ISA baseline; use 'native' for a machine-local build")
+        set(_BASE_CXX_FLAGS "-march=${QRX_ARCH_X86} -mtune=generic -msse2 -maes")
+        set(_BASE_C_FLAGS   "-march=${QRX_ARCH_X86} -mtune=generic -msse2 -maes -fPIC")
     else()
-        # Add ARM64-specific flags
-        set(_BASE_CXX_FLAGS "${_BASE_COMMON_FLAGS} -march=armv8-a+crypto+fp+simd")
-        set(_BASE_C_FLAGS   "${_BASE_COMMON_FLAGS} -march=armv8-a+crypto+fp+simd -fPIC")
+        set(QRX_ARCH_ARM "armv8-a+crypto+fp+simd" CACHE STRING
+            "AArch64 ISA baseline; use 'native' for a machine-local build")
+        set(_BASE_CXX_FLAGS "-march=${QRX_ARCH_ARM} -mtune=generic")
+        set(_BASE_C_FLAGS   "-march=${QRX_ARCH_ARM} -mtune=generic -fPIC")
     endif()
 
-    # Set pthread flag separately to avoid syntax issues
-    set(CMAKE_CXX_FLAGS "${_BASE_CXX_FLAGS} -pthread")
-    set(CMAKE_C_FLAGS   "${_BASE_C_FLAGS}")
+    # Caller-supplied flags go last so CXXFLAGS/CFLAGS can still override.
+    set(CMAKE_CXX_FLAGS "${_BASE_CXX_FLAGS} -pthread ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS   "${_BASE_C_FLAGS} ${CMAKE_C_FLAGS}")
 endif()
 
 set(BUILD_TESTS ON CACHE BOOL "Enables tests")
@@ -91,6 +107,28 @@ list(APPEND REF_RANDOMX_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/argon2_ref.c
         ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/argon2_ssse3.c
         )
+
+# The vectorised Argon2 implementations are chosen at runtime -- see
+# deps/RandomX/src/randomx.cpp, which only uses randomx_argon2_impl_avx2() when
+# cpu.hasAvx2() is also true -- so they carry their own ISA flags instead of
+# relying on the global baseline. Mirrors deps/RandomX/CMakeLists.txt; without
+# this, both files compile to a NULL impl on a portable baseline and the Argon2
+# dataset initialisation silently falls back to the reference code.
+if (NOT WIN32 AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+    include(CheckCCompilerFlag)
+    check_c_compiler_flag(-mssse3 QRX_HAS_MSSSE3)
+    if (QRX_HAS_MSSSE3)
+        set_source_files_properties(
+            ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/argon2_ssse3.c
+            PROPERTIES COMPILE_FLAGS -mssse3)
+    endif()
+    check_c_compiler_flag(-mavx2 QRX_HAS_MAVX2)
+    if (QRX_HAS_MAVX2)
+        set_source_files_properties(
+            ${CMAKE_CURRENT_SOURCE_DIR}/deps/RandomX/src/argon2_avx2.c
+            PROPERTIES COMPILE_FLAGS -mavx2)
+    endif()
+endif()
 
 if (CMAKE_C_COMPILER_ID MATCHES MSVC)
         enable_language(ASM_MASM)
