@@ -71,12 +71,14 @@ def setup_package():
     pkg_data = {'pyqrandomx': ['*.dll']} if sys.platform == 'win32' else {}
 
     version = versioneer.get_version()
+    cmdclass = versioneer.get_cmdclass()
+    cmdclass['build_ext'] = CMakeBuild
 
     setup(setup_requires=['pyscaffold>=3.0.2'] + sphinx + cmake,
           packages=['pyqrandomx', ],
           ext_modules=[CMakeExtension('pyqrandomx')],
           version=version,
-          cmdclass=dict(build_ext=CMakeBuild),
+          cmdclass=cmdclass,
           package_data=pkg_data,
           use_pyscaffold=True)
 
